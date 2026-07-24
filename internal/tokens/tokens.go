@@ -278,11 +278,17 @@ func (v *Verifier) verifyLayer1(ctx context.Context, rawJWT, aud, requestSigKeyT
 	if now >= claims.Exp || claims.Exp-claims.Iat > 24*3600 {
 		return nil, nil, fmt.Errorf("expired or over-long token")
 	}
-	if v.Replay.SeenJTI(claims.Jti, claims.Exp) {
-		return nil, nil, fmt.Errorf("jti replay")
-	}
 	if claims.Cnf.JWK.Thumbprint() != requestSigKeyThumb {
 		return nil, nil, fmt.Errorf("cnf/request-signature mismatch: token not presented by its agent")
+	}
+	// Replay is checked LAST of the Layer 1 checks, deliberately. SeenJTI both
+	// tests and records, so anything evaluated after it lets a request that was
+	// going to fail anyway consume the token's single-use id. In particular, a
+	// party holding a stolen token but not the agent key could burn every jti it
+	// saw and deny the rightful agent its own tokens — an availability attack
+	// needing no secrets. Only a token that is otherwise valid spends its jti.
+	if v.Replay.SeenJTI(claims.Jti, claims.Exp) {
+		return nil, nil, fmt.Errorf("jti replay")
 	}
 	return hdr, claims, nil
 }
