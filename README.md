@@ -86,4 +86,4 @@ by-reference, recovered the root's signature, and closed the chain
 
 ## License
 
-[MIT](./LICENSE) © 2026 O'Leary Labs
+[MIT](./LICENSE) © 2026 O'Leary Labs LLC
