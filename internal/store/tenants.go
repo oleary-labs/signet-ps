@@ -150,11 +150,19 @@ func (s *Tenants) VerifyAndOnboard(ctx context.Context, v *attest.Verifier, psa 
 	if err := v.VerifyPSA(ctx, psa, issuerURL, covered); err != nil {
 		return nil, err
 	}
-	t := NewTenant(psa)
-	if err := s.Onboard(t); err != nil {
+	if err := s.Onboard(NewTenant(psa)); err != nil {
 		return nil, err
 	}
-	return t, nil
+	// Return the CANONICAL registered tenant, not the candidate just built.
+	// Re-onboarding (rotation, scope change) updates the existing tenant's PSA
+	// in place and discards the candidate — so returning the candidate would
+	// hand back a detached object whose grants and mission log are empty, and
+	// any caller reading them would silently see a brand-new account.
+	live, ok := s.ByRoot(psa.Root)
+	if !ok {
+		return nil, fmt.Errorf("tenant not registered after onboarding")
+	}
+	return live, nil
 }
 
 func containsStr(xs []string, x string) bool {

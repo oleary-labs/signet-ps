@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -234,10 +235,24 @@ func verifyEOASig(root string, digest [32]byte, sig []byte) error {
 	if err != nil {
 		return err
 	}
-	if ethcrypto.PubkeyToAddress(*pub).Hex() != root { // normalize in wired code
+	if !addrEq(ethcrypto.PubkeyToAddress(*pub).Hex(), root) {
 		return fmt.Errorf("signer is not root")
 	}
 	return nil
+}
+
+// addrEq compares Ethereum addresses case- and 0x-prefix-insensitively.
+//
+// PubkeyToAddress().Hex() returns EIP-55 checksum casing, but a PSA may name
+// its root in any casing and still onboard (attest compares normalized). A raw
+// string compare here would mean a tenant whose PSA used a lowercase address
+// could never complete a step-up — their elevated actions would be permanently
+// stuck, with "signer is not root" as the only clue.
+func addrEq(a, b string) bool { return normalizeHex(a) == normalizeHex(b) }
+
+func normalizeHex(s string) string {
+	s = strings.TrimPrefix(strings.TrimPrefix(s, "0x"), "0X")
+	return strings.ToLower(s)
 }
 
 // --- helpers: hexOrDec, keccakStrings, orZero ---
