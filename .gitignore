@@ -1,0 +1,26 @@
+# Compiled binaries (produced by `go build ./cmd/...` in the repo root)
+/psd
+/resd
+/devtool
+*.exe
+*.test
+
+# Go build / coverage output
+/bin/
+*.out
+coverage.*
+vendor/
+
+# Editor / IDE (per-developer config, not project state)
+.idea/
+.vscode/
+*.swp
+
+# macOS
+.DS_Store
+
+# Claude Code session-local settings
+.claude/settings.local.json
+
+# Local scratch / demo run artifacts
+*.log
